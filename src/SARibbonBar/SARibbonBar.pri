@@ -19,6 +19,9 @@ contains( SA_RIBBON_CONFIG, use_frameless ) {
     include($$SA_RIBBON_QWindowKit_QMake_DIR/QWKWidgets.pri)
     # 定义SARIBBON_USE_3RDPARTY_FRAMELESSHELPER=1是的使用framelss库
     DEFINES += SARIBBON_USE_3RDPARTY_FRAMELESSHELPER=1
+    contains( SA_RIBBON_CONFIG, enable_snap_layout ) {
+		DEFINES += SARIBBON_ENABLE_SNAP_LAYOUT=1
+    }
 }else{
     message("do not use_frameless lib,compile with c+=14")
     !contains(CONFIG,C++14){
@@ -68,7 +71,8 @@ SOURCES += \
     $$PWD/SARibbonCtrlContainer.cpp \
     $$PWD/SARibbonPannelLayout.cpp \
     $$PWD/SARibbonPannelItem.cpp \
-    $$PWD/SARibbonLineWidgetContainer.cpp
+    $$PWD/SARibbonLineWidgetContainer.cpp \
+    $$PWD/SARibbonWidget.cpp
 
 HEADERS  += \
     $$PWD/SAFramelessHelper.h \
@@ -106,7 +110,8 @@ HEADERS  += \
     $$PWD/SARibbonCtrlContainer.h \
     $$PWD/SARibbonPannelLayout.h \
     $$PWD/SARibbonPannelItem.h \
-    $$PWD/SARibbonLineWidgetContainer.h
+    $$PWD/SARibbonLineWidgetContainer.h \
+    $$PWD/SARibbonWidget.h
 
 RESOURCES += \
     $$PWD/resource.qrc

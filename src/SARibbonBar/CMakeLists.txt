@@ -38,6 +38,7 @@ SET(SARIBBON_HEADER_FILES
     SARibbonCustomizeDialog.h
     SARibbonCustomizeWidget.h
     SARibbonMainWindow.h
+    SARibbonWidget.h
     SARibbonSystemButtonBar.h
     SARibbonApplicationButton.h
     SARibbonTabBar.h
@@ -79,6 +80,7 @@ SET(SARIBBON_SOURCE_FILES
     SARibbonCustomizeDialog.cpp
     SARibbonCustomizeWidget.cpp
     SARibbonMainWindow.cpp
+    SARibbonWidget.cpp
     SARibbonSystemButtonBar.cpp
     SARibbonApplicationButton.cpp
     SARibbonTabBar.cpp
@@ -165,6 +167,12 @@ target_compile_definitions(${SARIBBON_LIB_NAME} PRIVATE SA_COLOR_WIDGETS_MAKE_LI
 if(SARIBBON_USE_FRAMELESS_LIB)
     #使用frameless必须设置SARIBBON_USE_3RDPARTY_FRAMELESSHELPER宏为1,此宏必须为PUBLIC
     target_compile_definitions(${SARIBBON_LIB_NAME} PUBLIC SARIBBON_USE_3RDPARTY_FRAMELESSHELPER=1)
+    if(SARIBBON_ENABLE_SNAPLAYOUT)
+        # 是否开启windows11的snap layout效果，目前这个在不同qt版本下有bug
+        target_compile_definitions(${SARIBBON_LIB_NAME} PUBLIC SARIBBON_ENABLE_SNAP_LAYOUT=1)
+    else()
+        target_compile_definitions(${SARIBBON_LIB_NAME} PUBLIC SARIBBON_ENABLE_SNAP_LAYOUT=0)
+    endif()
 else()
     #不使用frameless必须设置SARIBBON_USE_3RDPARTY_FRAMELESSHELPER宏为0,此宏必须为PUBLIC
     target_compile_definitions(${SARIBBON_LIB_NAME} PUBLIC SARIBBON_USE_3RDPARTY_FRAMELESSHELPER=0)

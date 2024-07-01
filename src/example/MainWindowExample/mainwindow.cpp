@@ -72,6 +72,10 @@ MainWindow::MainWindow(QWidget* par)
     //! 通过setContentsMargins设置ribbon四周的间距
     ribbon->setContentsMargins(5, 0, 5, 0);
 
+    connect(ribbon, &SARibbonBar::actionTriggered, this, [ this ](QAction* action) {
+        mTextedit->append(QString("action object name=%1 triggered").arg(action->objectName()));
+    });
+
     //! cn:
     //! 这里示例的是如何设置和修改applicationButton，默认情况下SARibbonBar会创建一个SARibbonApplicationButton，
     //! SARibbonApplicationButton的父类是QToolButton,用户也可以创建自己的applicationButton，
@@ -163,11 +167,15 @@ MainWindow::MainWindow(QWidget* par)
     createActionsManager();
 
     setMinimumWidth(500);
-    showMaximized();
     setWindowIcon(QIcon(":/icon/icon/SA.svg"));
 #if SA_DEBUG_PRINT_SARIBBONBAR
     qDebug() << *ribbon;
 #endif
+    connect(ribbon, &SARibbonBar::currentRibbonTabChanged, this, [ this ](int v) {
+        mTextedit->append(QString("SARibbonBar::currentRibbonTabChanged(%1)").arg(v));
+    });
+
+    showMaximized();
 }
 
 void MainWindow::createRibbonApplicationButton()
@@ -305,9 +313,9 @@ void MainWindow::onActionCustomizeAndSaveTriggered(bool b)
 
         // 无更改直接退出
         if (!dlg.isApplied()) {
-			mTextedit->append("no change to save");
-			return;
-		}
+            mTextedit->append("no change to save");
+            return;
+        }
 
         QByteArray str;
         QXmlStreamWriter xml(&str);
@@ -342,20 +350,20 @@ void MainWindow::onActionCustomizeAndSaveWithApplyTriggered(bool b)
         auto res = QMessageBox::question(this,
                                          tr("question"),
                                          tr("Apply the last modification?\nIf not, local data will be reset"));
-		if (res == QMessageBox::Yes) {
-			onActionLoadCustomizeXmlFileTriggered();
-			return;
-		} else {
-			QFile::remove("customize.xml");
-			mHasApplyCustomizeXmlFile = true;
-		}
-	}
+        if (res == QMessageBox::Yes) {
+            onActionLoadCustomizeXmlFileTriggered();
+            return;
+        } else {
+            QFile::remove("customize.xml");
+            mHasApplyCustomizeXmlFile = true;
+        }
+    }
 
-	QDialog dlg;
+    QDialog dlg;
     QVBoxLayout* main = new QVBoxLayout;
-	dlg.setLayout(main);
-	SARibbonCustomizeWidget* widgetForCustomize = new SARibbonCustomizeWidget(this, &dlg);
-	widgetForCustomize->setupActionsManager(mActionsManager);
+    dlg.setLayout(main);
+    SARibbonCustomizeWidget* widgetForCustomize = new SARibbonCustomizeWidget(this, &dlg);
+    widgetForCustomize->setupActionsManager(mActionsManager);
 
     main->addWidget(widgetForCustomize, 1);
 
@@ -364,37 +372,37 @@ void MainWindow::onActionCustomizeAndSaveWithApplyTriggered(bool b)
 
     main->addWidget(buttonBox);
 
-	connect(buttonBox, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
-	connect(buttonBox, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+    connect(buttonBox, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+    connect(buttonBox, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
     connect(buttonBox, &QDialogButtonBox::clicked, &dlg, [ = ](QAbstractButton* button) {
-		auto role = buttonBox->buttonRole(button);
+        auto role = buttonBox->buttonRole(button);
         if (role == QDialogButtonBox::ApplyRole)  // apply
-		{
+        {
             if (widgetForCustomize->isCached()) {
-				widgetForCustomize->applys();
-				mTextedit->append("change applied");
+                widgetForCustomize->applys();
+                mTextedit->append("change applied");
             } else {
-				mTextedit->append("no change to apply");
-			}
-		}
-	});
+                mTextedit->append("no change to apply");
+            }
+        }
+    });
 
-	widgetForCustomize->fromXml("customize.xml");
+    widgetForCustomize->fromXml("customize.xml");
     if (QDialog::Accepted == dlg.exec()) {
         // 先apply
         if (widgetForCustomize->isCached())
-			widgetForCustomize->applys();
+            widgetForCustomize->applys();
 
         // 无更改直接退出
         if (!widgetForCustomize->isApplied()) {
-			mTextedit->append("no change to save");
-			return;
-		}
+            mTextedit->append("no change to save");
+            return;
+        }
 
-		QByteArray str;
-		QXmlStreamWriter xml(&str);
-		xml.setAutoFormatting(true);
-		xml.setAutoFormattingIndent(2);
+        QByteArray str;
+        QXmlStreamWriter xml(&str);
+        xml.setAutoFormatting(true);
+        xml.setAutoFormattingIndent(2);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)  // QXmlStreamWriter always encodes XML in UTF-8.
         xml.setCodec("utf-8");
 #endif
@@ -408,17 +416,17 @@ void MainWindow::onActionCustomizeAndSaveWithApplyTriggered(bool b)
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)  // QTextStream always encodes XML in UTF-8.
                 s.setCodec("utf-8");
 #endif
-				s << str;
-				s.flush();
-			}
-			mTextedit->append("write xml:");
-			mTextedit->append(str);
-		}
+                s << str;
+                s.flush();
+            }
+            mTextedit->append("write xml:");
+            mTextedit->append(str);
+        }
     } else {
         // 清除所有动作
-		widgetForCustomize->clear();
-		mTextedit->append("all changes clear, the applied changes will take no effect afer restart");
-	}
+        widgetForCustomize->clear();
+        mTextedit->append("all changes clear, the applied changes will take no effect afer restart");
+    }
 }
 
 void MainWindow::onActionHelpTriggered()
@@ -562,8 +570,7 @@ void MainWindow::onColorButtonColorClicked(const QColor& c, bool on)
  */
 void MainWindow::onRibbonThemeComboBoxCurrentIndexChanged(int index)
 {
-    SARibbonMainWindow::RibbonTheme t = static_cast< SARibbonMainWindow::RibbonTheme >(
-        mComboboxRibbonTheme->itemData(index).toInt());
+    SARibbonTheme t = static_cast< SARibbonTheme >(mComboboxRibbonTheme->itemData(index).toInt());
     setRibbonTheme(t);
 }
 
@@ -724,12 +731,12 @@ void MainWindow::createCategoryMain(SARibbonCategory* page)
     mComboboxRibbonTheme = new SARibbonComboBox();
     mComboboxRibbonTheme->setWindowTitle(tr("RibbonTheme"));
     mComboboxRibbonTheme->setObjectName("RibbonTheme");
-    mComboboxRibbonTheme->addItem("Theme Win7", SARibbonMainWindow::RibbonThemeWindows7);
-    mComboboxRibbonTheme->addItem("Theme Office2013", SARibbonMainWindow::RibbonThemeOffice2013);
-    mComboboxRibbonTheme->addItem("Theme Office2016 Blue", SARibbonMainWindow::RibbonThemeOffice2016Blue);
-    mComboboxRibbonTheme->addItem("Theme Office2021 Blue", SARibbonMainWindow::RibbonThemeOffice2021Blue);
-    mComboboxRibbonTheme->addItem("Theme Dark", SARibbonMainWindow::RibbonThemeDark);
-    mComboboxRibbonTheme->addItem("Theme Dark2", SARibbonMainWindow::RibbonThemeDark2);
+    mComboboxRibbonTheme->addItem("Theme Win7", static_cast< int >(SARibbonTheme::RibbonThemeWindows7));
+    mComboboxRibbonTheme->addItem("Theme Office2013", static_cast< int >(SARibbonTheme::RibbonThemeOffice2013));
+    mComboboxRibbonTheme->addItem("Theme Office2016 Blue", static_cast< int >(SARibbonTheme::RibbonThemeOffice2016Blue));
+    mComboboxRibbonTheme->addItem("Theme Office2021 Blue", static_cast< int >(SARibbonTheme::RibbonThemeOffice2021Blue));
+    mComboboxRibbonTheme->addItem("Theme Dark", static_cast< int >(SARibbonTheme::RibbonThemeDark));
+    mComboboxRibbonTheme->addItem("Theme Dark2", static_cast< int >(SARibbonTheme::RibbonThemeDark2));
     mComboboxRibbonTheme->setCurrentIndex(mComboboxRibbonTheme->findData(static_cast< int >(ribbonTheme())));
     connect(mComboboxRibbonTheme,
             QOverload< int >::of(&SARibbonComboBox::currentIndexChanged),
@@ -758,6 +765,8 @@ void MainWindow::createCategoryMain(SARibbonCategory* page)
     }
 
     QAction* act = createAction(tr("test 1"), ":/icon/icon/test1.svg");
+    QVariant temp("Test");
+    act->setData(temp);
     act->setMenu(menu);
     act->setToolTip(tr("use QToolButton::MenuButtonPopup mode"));
     pannelToolButtonStyle->addSmallAction(act, QToolButton::MenuButtonPopup);

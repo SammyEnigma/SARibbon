@@ -141,21 +141,18 @@ public:
 void SARibbonBar::PrivateData::init()
 {
     mApplicationButton = RibbonSubElementFactory->createRibbonApplicationButton(q_ptr);
-    q_ptr->connect(mApplicationButton, &QAbstractButton::clicked, q_ptr, &SARibbonBar::applicationButtonClicked);
+    q_ptr->connect(mApplicationButton.data(), &QAbstractButton::clicked, q_ptr, &SARibbonBar::applicationButtonClicked);
     mRibbonTabBar = RibbonSubElementFactory->createRibbonTabBar(q_ptr);
     mRibbonTabBar->setObjectName(QStringLiteral("objSARibbonTabBar"));
     mRibbonTabBar->setDrawBase(false);
-    q_ptr->connect(mRibbonTabBar, &QTabBar::currentChanged, q_ptr, &SARibbonBar::onCurrentRibbonTabChanged);
-    q_ptr->connect(mRibbonTabBar, &QTabBar::tabBarClicked, q_ptr, &SARibbonBar::onCurrentRibbonTabClicked);
-    q_ptr->connect(mRibbonTabBar, &QTabBar::tabBarDoubleClicked, q_ptr, &SARibbonBar::onCurrentRibbonTabDoubleClicked);
-    q_ptr->connect(mRibbonTabBar, &QTabBar::tabMoved, q_ptr, &SARibbonBar::onTabMoved);
+    q_ptr->connect(mRibbonTabBar.data(), &QTabBar::currentChanged, q_ptr, &SARibbonBar::onCurrentRibbonTabChanged);
+    q_ptr->connect(mRibbonTabBar.data(), &QTabBar::tabBarClicked, q_ptr, &SARibbonBar::onCurrentRibbonTabClicked);
+    q_ptr->connect(mRibbonTabBar.data(), &QTabBar::tabBarDoubleClicked, q_ptr, &SARibbonBar::onCurrentRibbonTabDoubleClicked);
+    q_ptr->connect(mRibbonTabBar.data(), &QTabBar::tabMoved, q_ptr, &SARibbonBar::onTabMoved);
     //
     mStackedContainerWidget = RibbonSubElementFactory->createRibbonStackedWidget(q_ptr);
     mStackedContainerWidget->setObjectName(QStringLiteral("objSARibbonStackedContainerWidget"));
-    mStackedContainerWidget->connect(mStackedContainerWidget,
-                                     &SARibbonStackedWidget::hidWindow,
-                                     q_ptr,
-                                     &SARibbonBar::onStackWidgetHided);
+    q_ptr->connect(mStackedContainerWidget.data(), &SARibbonStackedWidget::hidWindow, q_ptr, &SARibbonBar::onStackWidgetHided);
     // 捕获事件，在popmode时必须用到
     mStackedContainerWidget->installEventFilter(q_ptr);
     //
@@ -670,6 +667,8 @@ void SARibbonBar::insertCategoryPage(SARibbonCategory* category, int index)
     // 更新index信息
     d_ptr->updateTabData();
     QApplication::postEvent(this, new QResizeEvent(size(), size()));
+
+    connect(category, &SARibbonCategory::actionTriggered, this, &SARibbonBar::actionTriggered);
 }
 
 /**
@@ -1270,30 +1269,29 @@ void SARibbonBar::onCurrentRibbonTabChanged(int index)
         _SARibbonTabData p = var.value< _SARibbonTabData >();
         category           = p.category;
     }
-    if (category) {
-        if (d_ptr->mStackedContainerWidget->currentWidget() != category) {
-            d_ptr->mStackedContainerWidget->setCurrentWidget(category);
-        }
-        if (isMinimumMode()) {
-            d_ptr->mRibbonTabBar->clearFocus();
-            if (!d_ptr->mStackedContainerWidget->isVisible()) {
-                if (d_ptr->mStackedContainerWidget->isPopupMode()) {
-                    // 在stackedContainerWidget弹出前，先给tabbar一个QHoverEvent,让tabbar知道鼠标已经移开
-                    QHoverEvent ehl(QEvent::HoverLeave,
-                                    d_ptr->mRibbonTabBar->mapToGlobal(QCursor::pos()),
-                                    d_ptr->mRibbonTabBar->mapToGlobal(QCursor::pos()));
-                    QApplication::sendEvent(d_ptr->mRibbonTabBar, &ehl);
-                    resizeStackedContainerWidget();
-                    d_ptr->mStackedContainerWidget->setFocus();
-                    d_ptr->mStackedContainerWidget->exec();
-                    // 在最小模式下，每次显示完stackedContainerWidget后把tab的
-                    // 的index设置为-1，这样每次点击都会触发onCurrentRibbonTabChanged
-                }
-            } else {
+    if (!category) {
+        return;
+    }
+    if (d_ptr->mStackedContainerWidget->currentWidget() != category) {
+        d_ptr->mStackedContainerWidget->setCurrentWidget(category);
+    }
+    emit currentRibbonTabChanged(index);
+    if (isMinimumMode()) {
+        d_ptr->mRibbonTabBar->clearFocus();
+        if (!d_ptr->mStackedContainerWidget->isVisible()) {
+            if (d_ptr->mStackedContainerWidget->isPopupMode()) {
+                // 在stackedContainerWidget弹出前，先给tabbar一个QHoverEvent,让tabbar知道鼠标已经移开
+                QHoverEvent ehl(QEvent::HoverLeave,
+                                d_ptr->mRibbonTabBar->mapToGlobal(QCursor::pos()),
+                                d_ptr->mRibbonTabBar->mapToGlobal(QCursor::pos()));
+                QApplication::sendEvent(d_ptr->mRibbonTabBar, &ehl);
+                resizeStackedContainerWidget();
+                d_ptr->mStackedContainerWidget->setFocus();
+                // exec之前先发射信息号，否则会被exec阻塞
+                d_ptr->mStackedContainerWidget->show();
             }
         }
     }
-    emit currentRibbonTabChanged(index);
 }
 
 /**
@@ -1631,9 +1629,11 @@ void SARibbonBar::updateRibbonGeometry()
         c->updateItemGeometry();
         return true;
     });
+    // ！主题变更后，tabbar的长度需要进行刷新
+
     //! 直接给一个resizeevent，让所有刷新
-    // QResizeEvent* e = new QResizeEvent(size(), QSize());
-    // QApplication::postEvent(this, e);
+    QResizeEvent* e = new QResizeEvent(size(), QSize());
+    QApplication::postEvent(this, e);
 }
 
 /**
