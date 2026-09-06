@@ -1,4 +1,85 @@
-# lupdate always writes LF; force LF to avoid autocrlf conflicts
-*.ts text eol=lf
-# Compiled translation files are binary
-*.qm binary
+# =============================================================================
+# SARibbon 换行符策略（根治 autocrlf 引起的假性修改）
+#
+# 原理：显式属性的优先级高于任何克隆本地的 core.autocrlf / core.eol 配置。
+#       入库（clean）一律归一化为 LF；检出（smudge）的换行符由仓库决定。
+#       此后无论客户端 autocrlf 为 true/false/input，也无论构建工具
+#       （如 lupdate、格式化器）以何种换行重写文件，git status 都不会
+#       再出现换行符差异。
+#
+# 背景：i18n 的 .ts 曾以 CRLF 入库，CMake 构建时 lupdate 以 LF 重写，
+#       导致以 submodule 引用本仓库的主仓库永久显示 "modified content"
+#       （v2.9.3 已单独修复 .ts，本文件把该策略推广到全仓库）。
+# =============================================================================
+
+# 兜底：git 自动识别为文本的文件，仓库内一律以 LF 存储
+* text=auto
+
+# --- C++ / Qt 源码与工程文件：仓库内 LF，任何平台检出固定 CRLF ---
+#     （本项目磁盘约定为 CRLF；SARibbonGlobal.h 中的枚举定义要求 CRLF）
+*.cpp   text eol=crlf
+*.cc    text eol=crlf
+*.cxx   text eol=crlf
+*.c     text eol=crlf
+*.h     text eol=crlf
+*.hpp   text eol=crlf
+*.hxx   text eol=crlf
+*.ui    text eol=crlf
+*.qrc   text eol=crlf
+*.qss   text eol=crlf
+*.pro   text eol=crlf
+*.pri   text eol=crlf
+*.sip   text eol=crlf
+
+# --- 脚本：sh 必须 LF（bash 对 CRLF 敏感）；bat/cmd 必须 CRLF ---
+*.sh    text eol=lf
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+# --- 文档 / 配置：仓库内 LF，检出按平台默认 ---
+*.md    text
+*.txt   text
+*.yml   text
+*.yaml  text
+*.json  text
+*.xml   text
+*.html  text
+*.css   text
+*.js    text
+*.svg   text
+*.drawio text
+*.py    text
+*.toml  text
+*.cmake text
+CMakeLists.txt    text
+.clang-format     text
+.editorconfig     text
+.gitignore        text
+.gitmodules       text
+
+# --- 翻译：lupdate 始终输出 LF，检出固定 LF（沿用 v2.9.3 的既有策略）---
+*.ts    text eol=lf
+*.qm    binary
+
+# --- amalgamate 工具生成的合并文件：字节冻结，永不转换（该文件禁止手工修改）---
+src/SARibbon.cpp -text
+src/SARibbon.h   -text
+
+# --- 二进制资源 ---
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.bmp   binary
+*.ico   binary
+*.icns  binary
+*.pdf   binary
+*.zip   binary
+*.7z    binary
+*.pptx  binary
+*.exe   binary
+*.dll   binary
+*.lib   binary
+*.a     binary
+*.so    binary
