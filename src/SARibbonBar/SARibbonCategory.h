@@ -177,6 +177,9 @@ public:
     // Get button maximum aspect ratio
     qreal buttonMaximumAspectRatio() const;
 
+    // Get minimum width ratio of large buttons (relative to button height)
+    qreal largeButtonMinimumWidthRatio() const;
+
     // Iterate through all panels
     bool iteratePanel(FpPanelIterate fp) const;
 
@@ -229,6 +232,9 @@ protected:
 
     // Set button maximum aspect ratio
     void setButtonMaximumAspectRatio(qreal fac = 1.4);
+
+    // Set minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+    void setLargeButtonMinimumWidthRatio(qreal fac = 0.75);
 };
 
 /**

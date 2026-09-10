@@ -9482,14 +9482,21 @@ QSize SARibbonToolButton::PrivateData::calcSmallButtonSizeHint(const QStyleOptio
 
 QSize SARibbonToolButton::PrivateData::calcLargeButtonSizeHint(const QStyleOptionToolButton& opt)
 {
-	int w    = 0;
-	int h    = qRound(opt.fontMetrics.lineSpacing() * SARibbonToolButtonConstants::LARGE_BUTTON_HEIGHT_FACTOR);
-	int minW = static_cast< int >(
-		h * SARibbonToolButtonConstants::LARGE_BUTTON_MIN_WIDTH_RATIO);  // 最小宽度，在panel里面的按钮，最小宽度要和icon适应
+	int w = 0;
+	int h = qRound(opt.fontMetrics.lineSpacing() * SARibbonToolButtonConstants::LARGE_BUTTON_HEIGHT_FACTOR);
+	// 最小宽度，在panel里面的按钮，最小宽度要和icon适应；比例可通过largeButtonMinimumWidthRatio调整，
+	// 小于等于0时取消高度比例约束，仅以icon宽度作为下限，宽度由icon和文字内容决定
+	qreal minWRatio = layoutFactor.largeButtonMinimumWidthRatio;
+	int minW        = 0;
 
 	if (SARibbonPanel* panel = qobject_cast< SARibbonPanel* >(q_ptr->parent())) {
 		// 对于建立在SARibbonPanel的基础上的大按钮，把高度设置为SARibbonPanel计算的大按钮高度
 		h = panel->largeButtonHeight();
+	}
+	if (minWRatio > 0.0) {
+		minW = qRound(h * minWRatio);
+	} else {
+		minW = mLargeButtonSizeHint.width() + (2 * mSpacing);
 	}
 	int textHeight = calcTextDrawRectHeight(opt);
 	// 估算字体的宽度作为宽度
@@ -10053,6 +10060,35 @@ void SARibbonToolButton::setButtonMaximumAspectRatio(qreal v)
 qreal SARibbonToolButton::buttonMaximumAspectRatio() const
 {
 	return layoutFactor().buttonMaximumAspectRatio;
+}
+
+/**
+ * @brief Sets the minimum width ratio (relative to height) for large buttons / 设置大按钮的最小宽度比例（相对于高度）
+ *
+ * This is a convenience function that directly sets the `largeButtonMinimumWidthRatio` member of the
+ * `LayoutFactor` structure. It has the same effect as modifying the structure and calling `setLayoutFactor`.
+ *
+ * 此函数是直接设置 `LayoutFactor` 结构体中 `largeButtonMinimumWidthRatio` 成员的便捷方法。
+ * 其效果等同于修改结构体后调用 `setLayoutFactor`。
+ *
+ * @param v The new minimum width ratio value / 新的最小宽度比例值，小于等于0时仅以icon宽度作为下限
+ * @sa largeButtonMinimumWidthRatio, setLayoutFactor
+ */
+void SARibbonToolButton::setLargeButtonMinimumWidthRatio(qreal v)
+{
+	d_ptr->layoutFactor.largeButtonMinimumWidthRatio = v;
+	// 重新布局
+	invalidateSizeHint();
+}
+
+/**
+ * @brief Gets the minimum width ratio (relative to height) for large buttons / 获取大按钮的最小宽度比例
+ * @return The current minimum width ratio / 当前的最小宽度比例
+ * @sa setLargeButtonMinimumWidthRatio, layoutFactor
+ */
+qreal SARibbonToolButton::largeButtonMinimumWidthRatio() const
+{
+	return layoutFactor().largeButtonMinimumWidthRatio;
 }
 
 bool SARibbonToolButton::event(QEvent* e)
@@ -14359,6 +14395,7 @@ SARibbonPanelItem* SARibbonPanelLayout::createItem(QAction* action, SARibbonPane
 		button->setLargeIconSize(mLargeToolButtonIconSize);
 		button->setEnableWordWrap(isEnableWordWrap());
 		button->setButtonMaximumAspectRatio(mButtonMaximumAspectRatio);
+		button->setLargeButtonMinimumWidthRatio(mLargeButtonMinWidthRatio);
 		// 属性设置
 		QToolButton::ToolButtonPopupMode popMode = SARibbonPanel::getActionToolButtonPopupModeProperty(action);
 		button->setPopupMode(popMode);
@@ -15179,6 +15216,67 @@ void SARibbonPanelLayout::setButtonMaximumAspectRatio(qreal fac)
 qreal SARibbonPanelLayout::buttonMaximumAspectRatio() const
 {
 	return mButtonMaximumAspectRatio;
+}
+
+/**
+ * \if ENGLISH
+ * @brief Sets the minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+ *
+ * The minimum width of a large button is button height * this coefficient. For example, if the button height is h,
+ * then the minimum button width is minw = h * largeButtonMinimumWidthRatio.
+ * When the text is short (e.g., two characters), the text width may be smaller than this minimum, causing the button
+ * to look wider than necessary. Lowering this coefficient makes short-text buttons more compact.
+ *
+ * @param fac Minimum width ratio, <= 0 means only the icon width is kept as the lower bound
+ * @see largeButtonMinimumWidthRatio
+ *
+ * @note Users should not call @ref SARibbonPanelLayout::setLargeButtonMinimumWidthRatio to set it,
+ * but instead call @ref SARibbonBar::setLargeButtonMinimumWidthRatio to set the ratio
+ * \endif
+ *
+ * \if CHINESE
+ * @brief 设置大按钮最小宽度比例（相对于按钮高度），这个系数决定大按钮的最小宽度
+ *
+ * 大按钮的最小宽度为按钮高度*此系数，例如按钮高度为h，那么按钮最小宽度minw=h*largeButtonMinimumWidthRatio
+ * 当文字较短（如两个汉字）时，文字宽度可能小于此最小值，导致按钮显得过宽，调小此系数可以让短文字按钮更紧凑
+ *
+ * @param fac 最小宽度比例，<=0 表示仅以icon宽度作为下限
+ * @see largeButtonMinimumWidthRatio
+ *
+ * @note 用户不应该调用@ref SARibbonPanelLayout::setLargeButtonMinimumWidthRatio 来设置，
+ * 而是调用@ref SARibbonBar::setLargeButtonMinimumWidthRatio 设置
+ * \endif
+ */
+void SARibbonPanelLayout::setLargeButtonMinimumWidthRatio(qreal fac)
+{
+	mLargeButtonMinWidthRatio = fac;
+	// 遍历所有SARibbonToolButton
+	for (SARibbonPanelItem* item : sa_as_const(mItems)) {
+		if (!item) {
+			continue;
+		}
+		if (SARibbonToolButton* toolbtn = qobject_cast< SARibbonToolButton* >(item->widget())) {
+			toolbtn->setLargeButtonMinimumWidthRatio(fac);
+		}
+	}
+}
+
+/**
+ * \if ENGLISH
+ * @brief Gets the minimum width ratio of large buttons (relative to button height)
+ * @return The minimum width ratio
+ * @see setLargeButtonMinimumWidthRatio
+ * \endif
+ *
+ * \if CHINESE
+ * @brief 获取大按钮最小宽度比例（相对于按钮高度）
+ * @return 最小宽度比例
+ * @see setLargeButtonMinimumWidthRatio
+ * \endif
+ */
+qreal SARibbonPanelLayout::largeButtonMinimumWidthRatio() const
+{
+	return mLargeButtonMinWidthRatio;
 }
 
 /**
@@ -17263,6 +17361,66 @@ qreal SARibbonPanel::buttonMaximumAspectRatio() const
 	return 1.4;
 }
 
+/**
+ * \if ENGLISH
+ * @brief Sets the minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+ *
+ * The minimum width of a large button is button height * this coefficient. For example, if the button height is h,
+ * then the minimum button width minw = h * largeButtonMinimumWidthRatio
+ * When the text is short (e.g., two characters), the text width may be smaller than this minimum, causing the button
+ * to look wider than necessary. Lowering this coefficient makes short-text buttons more compact.
+ *
+ * @see largeButtonMinimumWidthRatio
+ *
+ * @note Users should not call @ref SARibbonPanel::setLargeButtonMinimumWidthRatio to set,
+ * but call @ref SARibbonBar::setLargeButtonMinimumWidthRatio to set the ratio
+ *
+ * @param fac New minimum width ratio, <= 0 means only the icon width is kept as the lower bound
+ * \endif
+ *
+ * \if CHINESE
+ * @brief 设置大按钮最小宽度比例（相对于按钮高度），这个系数决定大按钮的最小宽度
+ *
+ * 大按钮的最小宽度为按钮高度*此系数，例如按钮高度为h，那么按钮最小宽度minw=h*largeButtonMinimumWidthRatio
+ * 当文字较短（如两个汉字）时，文字宽度可能小于此最小值，导致按钮显得过宽，调小此系数可以让短文字按钮更紧凑
+ *
+ * @see largeButtonMinimumWidthRatio
+ *
+ * @note 用户不应该调用@ref SARibbonPanel::setLargeButtonMinimumWidthRatio 来设置，
+ * 而是调用@ref SARibbonBar::setLargeButtonMinimumWidthRatio 设置
+ *
+ * @param fac 新的最小宽度比例，<=0 表示仅以icon宽度作为下限
+ * \endif
+ */
+void SARibbonPanel::setLargeButtonMinimumWidthRatio(qreal fac)
+{
+	if (SARibbonPanelLayout* lay = qobject_cast< SARibbonPanelLayout* >(layout())) {
+		// 此函数会自动设置所有按钮的最小宽度比例
+		lay->setLargeButtonMinimumWidthRatio(fac);
+	}
+}
+
+/**
+ * \if ENGLISH
+ * @brief Minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+ * @return Current minimum width ratio of large buttons
+ * @see setLargeButtonMinimumWidthRatio
+ * \endif
+ *
+ * \if CHINESE
+ * @brief 大按钮最小宽度比例（相对于按钮高度），这个系数决定大按钮的最小宽度
+ * @return 当前大按钮最小宽度比例
+ * @see setLargeButtonMinimumWidthRatio
+ * \endif
+ */
+qreal SARibbonPanel::largeButtonMinimumWidthRatio() const
+{
+	if (SARibbonPanelLayout* lay = qobject_cast< SARibbonPanelLayout* >(layout())) {
+		return lay->largeButtonMinimumWidthRatio();
+	}
+	return 0.75;
+}
+
 /*** End of inlined file: SARibbonPanel.cpp ***/
 
 
@@ -17329,6 +17487,7 @@ public:
 	QSize panelLargeToolButtonIconSize { 32, 32 };  ///< 记录 panel 的默认大图标大小
 	int wheelScrollStep { 400 };                    ///< 默认滚轮滚动步长
 	qreal buttonMaximumAspectRatio { 1.4 };         ///< 按钮最大宽高比，这个系数决定按钮的最大宽度
+	qreal largeButtonMinimumWidthRatio { 0.75 };    ///< 大按钮最小宽度比例（相对于高度），这个系数决定大按钮的最小宽度
 	SARibbonPanel::PanelLayoutMode defaultPanelLayoutMode { SARibbonPanel::ThreeRowMode };
 };
 SARibbonCategory::PrivateData::PrivateData(SARibbonCategory* p) : q_ptr(p)
@@ -17389,6 +17548,7 @@ void SARibbonCategory::PrivateData::insertPanel(int index, SARibbonPanel* panel)
 	panel->setEnableWordWrap(this->enableWordWrap);
 	panel->setEnableIconRightText(this->enableIconRightText);
 	panel->setButtonMaximumAspectRatio(this->buttonMaximumAspectRatio);
+	panel->setLargeButtonMinimumWidthRatio(this->largeButtonMinimumWidthRatio);
 
 	index = qMax(0, index);
 	index = qMin(lay->panelCount(), index);
@@ -18416,6 +18576,67 @@ void SARibbonCategory::setButtonMaximumAspectRatio(qreal fac)
 qreal SARibbonCategory::buttonMaximumAspectRatio() const
 {
 	return d_ptr->buttonMaximumAspectRatio;
+}
+
+/**
+ * \if ENGLISH
+ * @brief Set minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+ *
+ * The minimum width of a large button is button height * this coefficient. For example, if the button height is h,
+ * then the minimum button width minw = h * largeButtonMinimumWidthRatio
+ * When the text is short (e.g., two characters), the text width may be smaller than this minimum, causing the button
+ * to look wider than necessary. Lowering this coefficient makes short-text buttons more compact.
+ *
+ * @see largeButtonMinimumWidthRatio
+ *
+ * @note Users should not call @ref SARibbonCategory::setLargeButtonMinimumWidthRatio to set,
+ * but call @ref SARibbonBar::setLargeButtonMinimumWidthRatio to set the ratio
+ *
+ * @param fac New minimum width ratio, <= 0 means only the icon width is kept as the lower bound
+ * \endif
+ *
+ * \if CHINESE
+ * @brief 设置大按钮最小宽度比例（相对于按钮高度），这个系数决定大按钮的最小宽度
+ *
+ * 大按钮的最小宽度为按钮高度*此系数，例如按钮高度为h，那么按钮最小宽度minw=h*largeButtonMinimumWidthRatio
+ * 当文字较短（如两个汉字）时，文字宽度可能小于此最小值，导致按钮显得过宽，调小此系数可以让短文字按钮更紧凑
+ *
+ * @see largeButtonMinimumWidthRatio
+ *
+ * @note 用户不应该调用@ref SARibbonCategory::setLargeButtonMinimumWidthRatio 来设置，
+ * 而是调用@ref SARibbonBar::setLargeButtonMinimumWidthRatio 设置
+ *
+ * @param fac 新的最小宽度比例，<=0 表示仅以icon宽度作为下限
+ * \endif
+ */
+void SARibbonCategory::setLargeButtonMinimumWidthRatio(qreal fac)
+{
+	d_ptr->largeButtonMinimumWidthRatio = fac;
+	iteratePanel([ fac ](SARibbonPanel* panel) -> bool {
+		if (panel) {
+			panel->setLargeButtonMinimumWidthRatio(fac);
+		}
+		return true;
+	});
+	updateItemGeometry();
+}
+
+/**
+ * \if ENGLISH
+ * @brief Minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+ * @return Current minimum width ratio of large buttons
+ * @see setLargeButtonMinimumWidthRatio
+ * \endif
+ *
+ * \if CHINESE
+ * @brief 大按钮最小宽度比例（相对于按钮高度），这个系数决定大按钮的最小宽度
+ * @return 当前大按钮最小宽度比例
+ * @see setLargeButtonMinimumWidthRatio
+ * \endif
+ */
+qreal SARibbonCategory::largeButtonMinimumWidthRatio() const
+{
+	return d_ptr->largeButtonMinimumWidthRatio;
 }
 
 /**
@@ -23304,6 +23525,7 @@ public:
 	bool mEnableTabDoubleClickToMinimumMode { true };            ///< 是否允许tab双击激活ribbon的最小化模式
 	bool mEnableWordWrap { true };                               ///< 是否允许文字换行
 	qreal buttonMaximumAspectRatio { 1.4 };                      ///< 按钮的最大宽高比
+	qreal largeButtonMinimumWidthRatio { 0.75 };                 ///< 大按钮最小宽度比例（相对于高度）
 	int mUpdateDepth { 0 };                                      ///< 批量更新嵌套深度，>0 时跳过遍历
 	bool mPendingWordWrapChange { false };                       ///< 待刷新的 wordWrap 变更
 	bool mPendingShowPanelTitleChange { false };                 ///< 待刷新的 showPanelTitle 变更
@@ -24029,6 +24251,7 @@ void SARibbonBar::insertCategoryPage(SARibbonCategory* category, int index)
 	category->setEnableShowPanelTitle(isEnableShowPanelTitle());
 	category->setEnableIconRightText(isEnableIconRightText());
 	category->setButtonMaximumAspectRatio(buttonMaximumAspectRatio());
+	category->setLargeButtonMinimumWidthRatio(largeButtonMinimumWidthRatio());
 	category->setPanelTitleHeight(panelTitleHeight());
 
 	int i = d_ptr->mRibbonTabBar->insertTab(index, category->categoryName());
@@ -26082,6 +26305,62 @@ void SARibbonBar::setButtonMaximumAspectRatio(qreal fac)
 qreal SARibbonBar::buttonMaximumAspectRatio() const
 {
 	return d_ptr->buttonMaximumAspectRatio;
+}
+
+/**
+ * \if ENGLISH
+ * @brief Set minimum width ratio of large buttons (relative to button height)
+ * This coefficient determines the minimum width of large buttons
+ *
+ * The minimum width of a large button is button height * this coefficient. For example, if the button height is h,
+ * then the minimum button width minw = h * largeButtonMinimumWidthRatio
+ * When the text is short (e.g., two characters), the text width may be smaller than this minimum, causing the button
+ * to look wider than necessary. Lowering this coefficient makes short-text buttons more compact.
+ *
+ * @see largeButtonMinimumWidthRatio
+ * @param fac Minimum width ratio, <= 0 means only the icon width is kept as the lower bound
+ * \endif
+ *
+ * \if CHINESE
+ * @brief 设置大按钮最小宽度比例（相对于按钮高度）
+ * 这个系数决定大按钮的最小宽度
+ *
+ * 大按钮的最小宽度为按钮高度*此系数，例如按钮高度为h，那么按钮最小宽度minw=h*largeButtonMinimumWidthRatio
+ * 当文字较短（如两个汉字）时，文字宽度可能小于此最小值，导致按钮显得过宽，调小此系数可以让短文字按钮更紧凑
+ *
+ * @see largeButtonMinimumWidthRatio
+ * @param fac 最小宽度比例，<=0 表示仅以icon宽度作为下限
+ * \endif
+ */
+void SARibbonBar::setLargeButtonMinimumWidthRatio(qreal fac)
+{
+	d_ptr->largeButtonMinimumWidthRatio = fac;
+	iterateCategory([ fac ](SARibbonCategory* category) -> bool {
+		if (category) {
+			category->setLargeButtonMinimumWidthRatio(fac);
+		}
+		return true;
+	});
+}
+
+/**
+ * \if ENGLISH
+ * @brief Get minimum width ratio of large buttons (relative to button height)
+ * This coefficient determines the minimum width of large buttons
+ * @return Minimum width ratio
+ * @see setLargeButtonMinimumWidthRatio
+ * \endif
+ *
+ * \if CHINESE
+ * @brief 获取大按钮最小宽度比例（相对于按钮高度）
+ * 这个系数决定大按钮的最小宽度
+ * @return 最小宽度比例
+ * @see setLargeButtonMinimumWidthRatio
+ * \endif
+ */
+qreal SARibbonBar::largeButtonMinimumWidthRatio() const
+{
+	return d_ptr->largeButtonMinimumWidthRatio;
 }
 
 /**

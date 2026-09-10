@@ -230,6 +230,12 @@ void MainWindow::initUI()
         this,
         &MainWindow::onDoubleSpinBoxToolbuttonMaximumAspectRatioChanged
     );
+    connect(
+        ui->doubleSpinBoxLargeButtonMinimumWidthRatio,
+        &QDoubleSpinBox::valueChanged,
+        this,
+        &MainWindow::onDoubleSpinBoxLargeButtonMinimumWidthRatioChanged
+    );
 #else
     connect(ui->spinBoxRibbonTitleHeight, QOverload< int >::of(&QSpinBox::valueChanged), this, &MainWindow::onSpinBoxRibbonTitleHeightChanged);
     connect(ui->spinBoxRibbonTabHeight, QOverload< int >::of(&QSpinBox::valueChanged), this, &MainWindow::onSpinBoxRibbonTabHeightChanged);
@@ -252,6 +258,12 @@ void MainWindow::initUI()
         this,
         &MainWindow::onDoubleSpinBoxToolbuttonMaximumAspectRatioChanged
     );
+    connect(
+        ui->doubleSpinBoxLargeButtonMinimumWidthRatio,
+        QOverload< double >::of(&QDoubleSpinBox::valueChanged),
+        this,
+        &MainWindow::onDoubleSpinBoxLargeButtonMinimumWidthRatioChanged
+    );
 #endif
     connect(ribbonBar, &SARibbonBar::currentRibbonTabChanged, this, [ this ](int tabIndex) {
         ui->textBrowser->append(QString("SARibbonBar::currentRibbonTabChanged(%1)").arg(tabIndex));
@@ -265,6 +277,7 @@ void MainWindow::initUI()
     ui->spinBoxPanelSmallIconSize->setValue(this->ribbonBar()->panelSmallIconSize().width());
     ui->spinBoxPanelLargeIconSize->setValue(this->ribbonBar()->panelLargeIconSize().width());
     ui->doubleSpinBoxToolbuttonMaximumAspectRatio->setValue(this->ribbonBar()->buttonMaximumAspectRatio());
+    ui->doubleSpinBoxLargeButtonMinimumWidthRatio->setValue(this->ribbonBar()->largeButtonMinimumWidthRatio());
 
     mChangeTitleBkColorTimer.setInterval(5000);
     mChangeTitleBkColorTimer.start();
@@ -1165,6 +1178,27 @@ void MainWindow::onSpinBoxPanelLargeIconSizeChanged(int newSize)
 void MainWindow::onDoubleSpinBoxToolbuttonMaximumAspectRatioChanged(double newRatio)
 {
     ribbonBar()->setButtonMaximumAspectRatio(newRatio);
+}
+
+/**
+ * \if ENGLISH
+ * @brief Handle large button minimum width ratio spinbox value changed
+ * @param newRatio The new minimum width ratio (relative to button height)
+ * @details Adjust the minimum width ratio of large buttons. Lowering this value makes
+ *          short-text (e.g., two-character) large buttons more compact; 0 means the
+ *          icon width is kept as the lower bound.
+ * \endif
+ *
+ * \if CHINESE
+ * @brief 处理大按钮最小宽度比例数值框值改变
+ * @param newRatio 新的最小宽度比例（相对于按钮高度）
+ * @details 调整大按钮的最小宽度比例。调小此值可以让短文字（如两字）大按钮更紧凑；
+ *          0 表示仅以icon宽度作为下限。
+ * \endif
+ */
+void MainWindow::onDoubleSpinBoxLargeButtonMinimumWidthRatioChanged(double newRatio)
+{
+    ribbonBar()->setLargeButtonMinimumWidthRatio(newRatio);
 }
 
 /**

@@ -8,6 +8,7 @@ SARibbon allows you to finely adjust the height and spacing of various ribbon pa
 - ✅ **Panel-level size adjustment**: unified setting of panel title height, panel spacing, and button icon sizes
 - ✅ **Dynamic icon calculation**: icon sizes are automatically calculated based on Category height and text height, no need to manually specify each button
 - ✅ **Button aspect ratio constraint**: control the maximum button width through a maximum aspect ratio factor to prevent excessive stretching
+- ✅ **Large button minimum width control**: control the minimum width of short-text large buttons through a minimum width ratio factor for a more compact layout
 
 ## Complete API Summary
 
@@ -33,6 +34,8 @@ All size settings are managed uniformly through `SARibbonBar`, no need to direct
 | `panelSmallIconSize()` | QSize | Get the small icon size |
 | `setButtonMaximumAspectRatio(r)` | void | Set the maximum button aspect ratio (controls maximum width) |
 | `buttonMaximumAspectRatio()` | qreal | Get the maximum button aspect ratio |
+| `setLargeButtonMinimumWidthRatio(r)` | void | Set the minimum width ratio of large buttons (controls minimum width, compact layout) |
+| `largeButtonMinimumWidthRatio()` | qreal | Get the minimum width ratio of large buttons |
 | `normalModeMainBarHeight()` | int | Get the main bar height in normal mode |
 | `minimumModeMainBarHeight()` | int | Get the main bar height in minimum mode |
 
@@ -104,6 +107,44 @@ public:
 ```
 
 Result: a compact yet fully functional interface with appropriate panel spacing and icon sizes suited for high-resolution displays.
+
+## Large Button Minimum Width (Compact Layout)
+
+The minimum width of large buttons (buttons created by `addLargeAction`) defaults to **button height × 0.75**.
+When the button text is short (e.g., two characters), the text width is smaller than this minimum, so the button
+is stretched to the minimum width and looks wider than necessary.
+
+Use `setLargeButtonMinimumWidthRatio` to lower this ratio so short-text buttons shrink to a width close to the icon/text:
+
+```cpp
+SARibbonBar* ribbon = ribbonBar();
+
+// Globally compact: minimum width = button height × 0.4
+ribbon->setLargeButtonMinimumWidthRatio(0.4);
+
+// Remove the height-based lower bound entirely; only the icon width (plus margins) is kept
+ribbon->setLargeButtonMinimumWidthRatio(0.0);
+```
+
+**Parameter description**:
+
+| Value | Behavior |
+|-------|----------|
+| `> 0` | Minimum width = button height × ratio (default 0.75) |
+| `<= 0` | No height-based constraint; minimum width = large icon width + margins |
+
+- Only affects large buttons; small/medium buttons are not affected
+- The default value 0.75 is fully backward compatible with previous versions
+- It can also be set per `SARibbonCategory` / `SARibbonPanel` (e.g., `panel->setLargeButtonMinimumWidthRatio(0.3)`)
+  to affect only the buttons within that scope
+
+!!! tip "Effect Reference"
+    With the default font in three-row mode, a large button labeled with two characters is about 59px wide by default
+    (ratio 0.75); setting the ratio to 0.3 or 0 shrinks it to about 34px, close to the icon width, making the layout
+    noticeably more compact.
+
+!!! example "Interactive Debugging"
+    The "Large Button Min Width Ratio" spin box in the settings dock of `example/MainWindowExample` adjusts this ratio in real time.
 
 !!! info "Dynamic Icon Calculation Logic"
     SARibbon's icon sizes are not set to fixed values like traditional toolbars, but are dynamically calculated based on the RibbonBar's `CategoryHeight` and text height.

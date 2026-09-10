@@ -94,6 +94,25 @@ public:
          * @default 1.4
          */
         qreal buttonMaximumAspectRatio { 1.4 };
+
+        /**
+         * @brief Minimum width ratio (relative to height) for large buttons / 大按钮最小宽度比例（相对于高度）
+         *
+         * The minimum width of a large button is determined by its height multiplied by this coefficient.
+         * For example, if the button height is `h`, then the minimum width is `minw = h * largeButtonMinimumWidthRatio`.
+         * When the text is short (e.g., two characters), the text width may be smaller than this minimum,
+         * causing the button to look wider than necessary. Lowering this coefficient makes short-text buttons
+         * more compact; setting it to 0 (or a negative value) removes the height-based minimum width constraint,
+         * and only the icon width (plus margins) is kept as the lower bound.
+         *
+         * 大按钮的最小宽度为按钮高度*此系数，例如按钮高度为h，那么按钮最小宽度minw=h*largeButtonMinimumWidthRatio。
+         * 当文字较短（如两个汉字）时，文字宽度可能小于此最小值，导致按钮显得过宽。调小此系数可以让短文字按钮更紧凑；
+         * 设为0（或负值）则取消按高度计算的最小宽度约束，仅保留icon宽度（加边距）作为下限。
+         *
+         * @note Only effective for large buttons; small buttons are not affected. / 仅对大按钮生效，小按钮不受影响
+         * @default 0.75
+         */
+        qreal largeButtonMinimumWidthRatio { 0.75 };
     };
 
 public:
@@ -140,6 +159,11 @@ public:
     void setButtonMaximumAspectRatio(qreal v = 1.4);
     // Gets the button's maximum aspect ratio (width/height) / 获取按钮的最大宽高比
     qreal buttonMaximumAspectRatio() const;
+
+    // Sets the minimum width ratio (relative to height) for large buttons / 设置大按钮的最小宽度比例（相对于高度）
+    void setLargeButtonMinimumWidthRatio(qreal v = 0.75);
+    // Gets the minimum width ratio (relative to height) for large buttons / 获取大按钮的最小宽度比例
+    qreal largeButtonMinimumWidthRatio() const;
 
     // Invalidates the cached size hint / 使缓存的size hint失效
     void invalidateSizeHint();

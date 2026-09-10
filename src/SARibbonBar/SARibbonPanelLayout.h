@@ -110,6 +110,8 @@ public:
     bool isEnableWordWrap() const;
     // Maximum aspect ratio of buttons, this coefficient determines the maximum width of buttons
     qreal buttonMaximumAspectRatio() const;
+    // Minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+    qreal largeButtonMinimumWidthRatio() const;
 
 public:
     // Adds an item to the layout (SARibbonPanelLayout not supported)
@@ -155,6 +157,8 @@ protected:
     void setEnableWordWrap(bool on);
     // Set maximum aspect ratio of buttons, this coefficient determines the maximum width of buttons
     void setButtonMaximumAspectRatio(qreal fac = 1.4);
+    // Set minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+    void setLargeButtonMinimumWidthRatio(qreal fac = 0.75);
 
 private:
     // Calculate window width and maximum width based on column count
@@ -181,6 +185,7 @@ private:
     QRect mOptionActionBtnGeometry;               ///< optionAction的位置
     bool mEnableWordWrap { true };                ///< 是否允许文字换行
     qreal mButtonMaximumAspectRatio { 1.4 };      ///< 按钮的宽高比
+    qreal mLargeButtonMinWidthRatio { 0.75 };     ///< 大按钮最小宽度比例（相对于高度）
 };
 
 #endif  // SARIBBONPANELLAYOUT_H

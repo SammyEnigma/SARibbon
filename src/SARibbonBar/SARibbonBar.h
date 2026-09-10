@@ -477,6 +477,11 @@ public:
     // Get button maximum aspect ratio
     qreal buttonMaximumAspectRatio() const;
 
+    // Set minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+    void setLargeButtonMinimumWidthRatio(qreal fac = 0.75);
+    // Get minimum width ratio of large buttons (relative to button height)
+    qreal largeButtonMinimumWidthRatio() const;
+
     // Set panel title height
     void setPanelTitleHeight(int h);
     // Get panel title height

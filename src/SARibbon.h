@@ -1748,6 +1748,25 @@ public:
 		 * @default 1.4
 		 */
 		qreal buttonMaximumAspectRatio { 1.4 };
+
+		/**
+		 * @brief Minimum width ratio (relative to height) for large buttons / 大按钮最小宽度比例（相对于高度）
+		 *
+		 * The minimum width of a large button is determined by its height multiplied by this coefficient.
+		 * For example, if the button height is `h`, then the minimum width is `minw = h * largeButtonMinimumWidthRatio`.
+		 * When the text is short (e.g., two characters), the text width may be smaller than this minimum,
+		 * causing the button to look wider than necessary. Lowering this coefficient makes short-text buttons
+		 * more compact; setting it to 0 (or a negative value) removes the height-based minimum width constraint,
+		 * and only the icon width (plus margins) is kept as the lower bound.
+		 *
+		 * 大按钮的最小宽度为按钮高度*此系数，例如按钮高度为h，那么按钮最小宽度minw=h*largeButtonMinimumWidthRatio。
+		 * 当文字较短（如两个汉字）时，文字宽度可能小于此最小值，导致按钮显得过宽。调小此系数可以让短文字按钮更紧凑；
+		 * 设为0（或负值）则取消按高度计算的最小宽度约束，仅保留icon宽度（加边距）作为下限。
+		 *
+		 * @note Only effective for large buttons; small buttons are not affected. / 仅对大按钮生效，小按钮不受影响
+		 * @default 0.75
+		 */
+		qreal largeButtonMinimumWidthRatio { 0.75 };
 	};
 
 public:
@@ -1790,10 +1809,15 @@ public:
 	// Checks if automatic text wrapping is enabled / 检查是否启用了自动文字换行
 	bool isEnableWordWrap() const;
 
-	// Sets the button's maximum aspect ratio (width/height) / 设置按钮的最大宽高比
-	void setButtonMaximumAspectRatio(qreal v = 1.4);
-	// Gets the button's maximum aspect ratio (width/height) / 获取按钮的最大宽高比
-	qreal buttonMaximumAspectRatio() const;
+		// Sets the button's maximum aspect ratio (width/height) / 设置按钮的最大宽高比
+		void setButtonMaximumAspectRatio(qreal v = 1.4);
+		// Gets the button's maximum aspect ratio (width/height) / 获取按钮的最大宽高比
+		qreal buttonMaximumAspectRatio() const;
+
+		// Sets the minimum width ratio (relative to height) for large buttons / 设置大按钮的最小宽度比例（相对于高度）
+		void setLargeButtonMinimumWidthRatio(qreal v = 0.75);
+		// Gets the minimum width ratio (relative to height) for large buttons / 获取大按钮的最小宽度比例
+		qreal largeButtonMinimumWidthRatio() const;
 
 	// Invalidates the cached size hint / 使缓存的size hint失效
 	void invalidateSizeHint();
@@ -2930,6 +2954,8 @@ public:
 	bool isEnableWordWrap() const;
 	// Maximum aspect ratio of buttons, this coefficient determines the maximum width of buttons
 	qreal buttonMaximumAspectRatio() const;
+	// Minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+	qreal largeButtonMinimumWidthRatio() const;
 
 public:
 	// Adds an item to the layout (SARibbonPanelLayout not supported)
@@ -2975,6 +3001,8 @@ protected:
 	void setEnableWordWrap(bool on);
 	// Set maximum aspect ratio of buttons, this coefficient determines the maximum width of buttons
 	void setButtonMaximumAspectRatio(qreal fac = 1.4);
+	// Set minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+	void setLargeButtonMinimumWidthRatio(qreal fac = 0.75);
 
 private:
 	// Calculate window width and maximum width based on column count
@@ -3001,6 +3029,7 @@ private:
 	QRect mOptionActionBtnGeometry;               ///< optionAction的位置
 	bool mEnableWordWrap { true };                ///< 是否允许文字换行
 	qreal mButtonMaximumAspectRatio { 1.4 };      ///< 按钮的宽高比
+	qreal mLargeButtonMinWidthRatio { 0.75 };     ///< 大按钮最小宽度比例（相对于高度）
 };
 
 #endif  // SARIBBONPANELLAYOUT_H
@@ -3335,6 +3364,9 @@ public:
 	// Maximum aspect ratio of buttons, this coefficient determines the maximum width of buttons
 	qreal buttonMaximumAspectRatio() const;
 
+	// Minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+	qreal largeButtonMinimumWidthRatio() const;
+
 	// This function will iterate through all RibbonToolButton under SARibbonPanel, execute function pointer
 	// (bool(SARibbonRibbonToolButton*)), function pointer returns false to stop iteration
 	bool iterateButton(FpRibbonToolButtonIterate fp) const;
@@ -3416,6 +3448,9 @@ protected:
 
 	// Set the maximum aspect ratio of buttons, this coefficient determines the maximum width of buttons
 	void setButtonMaximumAspectRatio(qreal fac = 1.4);
+
+	// Set the minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+	void setLargeButtonMinimumWidthRatio(qreal fac = 0.75);
 };
 
 #endif  // SARIBBONPANEL_H
@@ -3603,6 +3638,9 @@ public:
 	// Get button maximum aspect ratio
 	qreal buttonMaximumAspectRatio() const;
 
+	// Get minimum width ratio of large buttons (relative to button height)
+	qreal largeButtonMinimumWidthRatio() const;
+
 	// Iterate through all panels
 	bool iteratePanel(FpPanelIterate fp) const;
 
@@ -3655,6 +3693,9 @@ protected:
 
 	// Set button maximum aspect ratio
 	void setButtonMaximumAspectRatio(qreal fac = 1.4);
+
+	// Set minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+	void setLargeButtonMinimumWidthRatio(qreal fac = 0.75);
 };
 
 /**
@@ -4991,6 +5032,11 @@ public:
 	void setButtonMaximumAspectRatio(qreal fac = 1.4);
 	// Get button maximum aspect ratio
 	qreal buttonMaximumAspectRatio() const;
+
+	// Set minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+	void setLargeButtonMinimumWidthRatio(qreal fac = 0.75);
+	// Get minimum width ratio of large buttons (relative to button height)
+	qreal largeButtonMinimumWidthRatio() const;
 
 	// Set panel title height
 	void setPanelTitleHeight(int h);

@@ -8,6 +8,7 @@ SARibbon 允许您精细调整 ribbon 各个部分的高度和间距，以适应
 - ✅ **面板级尺寸调节**：支持面板标题高度、面板间距、按钮图标大小的统一设置
 - ✅ **动态图标计算**：图标大小根据 Category 高度和文字高度自动计算，无需手动指定每个按钮
 - ✅ **按钮宽高比限制**：通过最大宽高比系数控制按钮的最大宽度，防止过度拉伸
+- ✅ **大按钮最小宽度控制**：通过最小宽度比例系数控制短文字大按钮的最小宽度，让按钮布局更紧凑
 
 ## 完整API摘要
 
@@ -33,6 +34,8 @@ SARibbon 允许您精细调整 ribbon 各个部分的高度和间距，以适应
 | `panelSmallIconSize()` | QSize | 获取小图标尺寸 |
 | `setButtonMaximumAspectRatio(r)` | void | 设置按钮最大宽高比（控制最大宽度） |
 | `buttonMaximumAspectRatio()` | qreal | 获取按钮最大宽高比 |
+| `setLargeButtonMinimumWidthRatio(r)` | void | 设置大按钮最小宽度比例（控制最小宽度，紧凑布局） |
+| `largeButtonMinimumWidthRatio()` | qreal | 获取大按钮最小宽度比例 |
 | `normalModeMainBarHeight()` | int | 获取正常模式下的主栏高度 |
 | `minimumModeMainBarHeight()` | int | 获取最小模式下的主栏高度 |
 
@@ -129,6 +132,42 @@ public:
 ```
 
 运行效果：界面紧凑但功能完整，各面板间距适当，图标大小适合高分辨率显示。
+
+## 大按钮最小宽度（紧凑布局）
+
+大按钮（`addLargeAction` 生成的按钮）的最小宽度默认为 **按钮高度 × 0.75**。当按钮文字很短（如两个汉字）时，
+文字宽度会小于这个最小值，按钮被撑到最小宽度，导致按钮显得过宽、布局不够紧凑。
+
+通过 `setLargeButtonMinimumWidthRatio` 可以调小这个比例，让短文字按钮收缩到贴近文字/图标的宽度：
+
+```cpp
+SARibbonBar* ribbon = ribbonBar();
+
+// 全局紧凑：最小宽度 = 按钮高度 × 0.4
+ribbon->setLargeButtonMinimumWidthRatio(0.4);
+
+// 完全取消按高度计算的下限，仅以 icon 宽度（加边距）作为最小宽度
+ribbon->setLargeButtonMinimumWidthRatio(0.0);
+```
+
+**参数说明**：
+
+| 取值 | 行为 |
+|------|------|
+| `> 0` | 最小宽度 = 按钮高度 × 比例（默认 0.75） |
+| `<= 0` | 取消高度比例约束，最小宽度 = 大图标宽度 + 边距 |
+
+- 仅对大按钮生效，小按钮/中按钮不受影响
+- 默认值 0.75，与旧版本行为完全一致
+- 也可在 `SARibbonCategory` / `SARibbonPanel` 级别单独设置（如 `panel->setLargeButtonMinimumWidthRatio(0.3)`），
+  仅影响该范围内的按钮
+
+!!! tip "效果参考"
+    以默认字体下三行模式为例："打开"两字大按钮默认宽度约 59px（比例 0.75），设为 0.3 或 0 后收缩到约 34px，
+    与图标宽度相当，布局明显更紧凑。
+
+!!! example "交互式调试"
+    运行 `example/MainWindowExample` 示例左侧 dock 的参数设置区，"Large Button Min Width Ratio" 数值框可实时调整此比例并查看效果。
 
 !!! info "图标动态计算逻辑"
     SARibbon 的图标大小并非像传统工具栏那样设置固定值，而是根据 RibbonBar 的 `CategoryHeight` 和文字高度动态计算。

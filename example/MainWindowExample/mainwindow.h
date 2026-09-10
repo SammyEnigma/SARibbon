@@ -236,6 +236,9 @@ private Q_SLOTS:
     // Change the tool button maximum aspect ratio
     void onDoubleSpinBoxToolbuttonMaximumAspectRatioChanged(double newRatio);
 
+    // Change the large button minimum width ratio (relative to button height)
+    void onDoubleSpinBoxLargeButtonMinimumWidthRatioChanged(double newRatio);
+
     // Timer timeout handler for title background color changes
     void onTitleBackgroundBrushChangedTimeout();
 

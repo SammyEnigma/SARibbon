@@ -840,14 +840,21 @@ QSize SARibbonToolButton::PrivateData::calcSmallButtonSizeHint(const QStyleOptio
 
 QSize SARibbonToolButton::PrivateData::calcLargeButtonSizeHint(const QStyleOptionToolButton& opt)
 {
-    int w    = 0;
-    int h    = qRound(opt.fontMetrics.lineSpacing() * SARibbonToolButtonConstants::LARGE_BUTTON_HEIGHT_FACTOR);
-    int minW = static_cast< int >(
-        h * SARibbonToolButtonConstants::LARGE_BUTTON_MIN_WIDTH_RATIO);  // 最小宽度，在panel里面的按钮，最小宽度要和icon适应
+    int w = 0;
+    int h = qRound(opt.fontMetrics.lineSpacing() * SARibbonToolButtonConstants::LARGE_BUTTON_HEIGHT_FACTOR);
+    // 最小宽度，在panel里面的按钮，最小宽度要和icon适应；比例可通过largeButtonMinimumWidthRatio调整，
+    // 小于等于0时取消高度比例约束，仅以icon宽度作为下限，宽度由icon和文字内容决定
+    qreal minWRatio = layoutFactor.largeButtonMinimumWidthRatio;
+    int minW        = 0;
 
     if (SARibbonPanel* panel = qobject_cast< SARibbonPanel* >(q_ptr->parent())) {
         // 对于建立在SARibbonPanel的基础上的大按钮，把高度设置为SARibbonPanel计算的大按钮高度
         h = panel->largeButtonHeight();
+    }
+    if (minWRatio > 0.0) {
+        minW = qRound(h * minWRatio);
+    } else {
+        minW = mLargeButtonSizeHint.width() + (2 * mSpacing);
     }
     int textHeight = calcTextDrawRectHeight(opt);
     // 估算字体的宽度作为宽度
@@ -1411,6 +1418,35 @@ void SARibbonToolButton::setButtonMaximumAspectRatio(qreal v)
 qreal SARibbonToolButton::buttonMaximumAspectRatio() const
 {
     return layoutFactor().buttonMaximumAspectRatio;
+}
+
+/**
+ * @brief Sets the minimum width ratio (relative to height) for large buttons / 设置大按钮的最小宽度比例（相对于高度）
+ *
+ * This is a convenience function that directly sets the `largeButtonMinimumWidthRatio` member of the
+ * `LayoutFactor` structure. It has the same effect as modifying the structure and calling `setLayoutFactor`.
+ *
+ * 此函数是直接设置 `LayoutFactor` 结构体中 `largeButtonMinimumWidthRatio` 成员的便捷方法。
+ * 其效果等同于修改结构体后调用 `setLayoutFactor`。
+ *
+ * @param v The new minimum width ratio value / 新的最小宽度比例值，小于等于0时仅以icon宽度作为下限
+ * @sa largeButtonMinimumWidthRatio, setLayoutFactor
+ */
+void SARibbonToolButton::setLargeButtonMinimumWidthRatio(qreal v)
+{
+    d_ptr->layoutFactor.largeButtonMinimumWidthRatio = v;
+    // 重新布局
+    invalidateSizeHint();
+}
+
+/**
+ * @brief Gets the minimum width ratio (relative to height) for large buttons / 获取大按钮的最小宽度比例
+ * @return The current minimum width ratio / 当前的最小宽度比例
+ * @sa setLargeButtonMinimumWidthRatio, layoutFactor
+ */
+qreal SARibbonToolButton::largeButtonMinimumWidthRatio() const
+{
+    return layoutFactor().largeButtonMinimumWidthRatio;
 }
 
 bool SARibbonToolButton::event(QEvent* e)

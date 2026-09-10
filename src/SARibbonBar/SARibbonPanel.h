@@ -326,6 +326,9 @@ public:
     // Maximum aspect ratio of buttons, this coefficient determines the maximum width of buttons
     qreal buttonMaximumAspectRatio() const;
 
+    // Minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+    qreal largeButtonMinimumWidthRatio() const;
+
     // This function will iterate through all RibbonToolButton under SARibbonPanel, execute function pointer
     // (bool(SARibbonRibbonToolButton*)), function pointer returns false to stop iteration
     bool iterateButton(FpRibbonToolButtonIterate fp) const;
@@ -407,6 +410,9 @@ protected:
 
     // Set the maximum aspect ratio of buttons, this coefficient determines the maximum width of buttons
     void setButtonMaximumAspectRatio(qreal fac = 1.4);
+
+    // Set the minimum width ratio of large buttons (relative to button height), this coefficient determines the minimum width of large buttons
+    void setLargeButtonMinimumWidthRatio(qreal fac = 0.75);
 };
 
 #endif  // SARIBBONPANEL_H

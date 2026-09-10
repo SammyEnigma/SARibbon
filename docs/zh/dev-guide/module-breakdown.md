@@ -393,6 +393,7 @@ flowchart TD
 | `mLargeToolButtonIconSize` | `QSize` | `(32,32)` | 大按钮图标尺寸 |
 | `mEnableWordWrap` | `bool` | `true` | 文字是否换行 |
 | `mButtonMaximumAspectRatio` | `qreal` | `1.4` | 按钮最大宽高比 |
+| `mLargeButtonMinWidthRatio` | `qreal` | `0.75` | 大按钮最小宽度比例（相对于高度） |
 
 ### 修改指南
 
@@ -475,6 +476,7 @@ classDiagram
         +smallIconSize
         +twoLineHeightFactor
         +buttonMaximumAspectRatio
+        +largeButtonMinimumWidthRatio
     }
 
     SARibbonToolButton --> SARibbonButtonLayoutStrategy : 使用策略
@@ -515,6 +517,7 @@ flowchart TD
 | `setEnableWordWrap(bool)` | 启用/禁用文字换行 | 仅大按钮有效 |
 | `setLayoutFactor(factor)` | 设置布局系数 | 微调按钮外观 |
 | `setButtonMaximumAspectRatio(v)` | 设置最大宽高比 | 默认 1.4 |
+| `setLargeButtonMinimumWidthRatio(v)` | 设置大按钮最小宽度比例 | 默认 0.75，<=0 时以 icon 宽度为下限 |
 | `updateRect()` | 强制更新内部布局矩形 | 参数变化后调用 |
 | `invalidateSizeHint()` | 使缓存的 sizeHint 失效 | 触发重新计算 |
 | `paintButton()` | 虚方法：绘制背景 | 扩展点 |
@@ -531,6 +534,7 @@ flowchart TD
 | `twoLineHeightFactor` | 2.05 | 两行文本高度系数 | 增大→文字区域更高，图标更小 |
 | `oneLineHeightFactor` | 1.2 | 单行文本高度系数 | 增大→文字行高更大 |
 | `buttonMaximumAspectRatio` | 1.4 | 最大宽高比 | 增大→按钮可以更宽 |
+| `largeButtonMinimumWidthRatio` | 0.75 | 大按钮最小宽度比例（相对于高度） | 减小→短文字大按钮更紧凑；<=0 时仅以 icon 宽度为下限 |
 
 ### 修改指南
 

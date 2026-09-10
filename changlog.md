@@ -1,5 +1,15 @@
 # 版本更新记录(change log):
 
+## 2026-09-10 -> 2.9.4
+
+- 新增`SARibbonBar::setLargeButtonMinimumWidthRatio`：设置大按钮最小宽度比例（相对于按钮高度，默认0.75）。
+  此前短文字（如两个汉字）的`addLargeAction`大按钮会被硬编码的最小宽度（高度×0.75）撑宽，无法收紧；
+  现在调小此比例可让短文字按钮更紧凑，设为0（或负值）则仅以icon宽度（加边距）作为下限。接口在
+  Bar/Category/Panel/PanelLayout/ToolButton各层级均可用，且随新建category/panel/button自动传播
+- `SARibbonToolButton::LayoutFactor`新增`largeButtonMinimumWidthRatio`字段
+- MainWindowExample：dock参数设置区新增"Large Button Min Width Ratio"数值框，可实时调整验证
+- 文档：`SARibbon-size-settings.md`（中英文）与`module-breakdown.md`补充新接口说明
+
 ## 2026-08-31 -> 2.9.3
 
 - 全面性能优化：
