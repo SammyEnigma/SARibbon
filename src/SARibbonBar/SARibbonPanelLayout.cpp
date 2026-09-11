@@ -601,12 +601,15 @@ void SARibbonPanelLayout::doLayout()
     }
 
     // 不在上面那里进行show和hide因为这会触发SARibbonPanelLayout的重绘，导致循环绘制，非常影响效率
+    // 注意：必须用isHidden()判断而不能用isVisible()。isVisible()受祖先控件可见性影响，
+    // 当布局发生在窗口显示之前时isVisible()恒为false，会跳过hide()导致控件未打上显式隐藏标记，
+    // 窗口显示后该控件将携带旧几何残留显示
     for (QWidget* w : sa_as_const(showWidgets)) {
-        if (!w->isVisible())
+        if (w->isHidden())
             w->show();
     }
     for (QWidget* w : sa_as_const(hideWidgets)) {
-        if (w->isVisible())
+        if (!w->isHidden())
             w->hide();
     }
 
@@ -1698,7 +1701,9 @@ int SARibbonPanelLayout::largeButtonHeight() const
 void SARibbonPanelLayout::setGeometry(const QRect& rect)
 {
     QRect old = geometry();
-    if (old == rect) {
+    // 几何未变且布局不脏时才可跳过；布局脏（如action显隐变化触发invalidate）时即使几何
+    // 相同也必须重新执行doLayout，否则显隐/位置变化不会被应用
+    if ((old == rect) && !isDirty()) {
         return;
     }
     if (rect.width() <= 0 || rect.height() <= 0) {

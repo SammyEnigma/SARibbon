@@ -2,6 +2,16 @@
 
 ## 2026-09-10 -> 2.9.4
 
+- 修复：隐藏`QAction`后其面板按钮残留显示的问题。布局的显隐判断此前使用`isVisible()`，
+  该状态受祖先控件可见性影响——在主窗口显示之前执行布局时`hide()`会被跳过，控件未打上
+  显式隐藏标记，窗口显示后携带旧几何残留在界面上（典型现象：启动时隐藏某功能的action，
+  对应按钮仍压在其他按钮之上）。`SARibbonPanelLayout`与`SARibbonCategoryLayout`的`doLayout()`
+  统一改用`isHidden()`判断后再show/hide，启动阶段即可正确落显式标记；
+- 修复：运行时切换action显隐后面板不重排的问题。`SARibbonPanel`收到`ActionChanged`事件
+  此前仅通知父布局尺寸变化，面板自身布局不会失效；现在同时失效并激活面板布局；
+- 修复：布局几何未变化时跳过重排的问题。`SARibbonPanelLayout`/`SARibbonCategoryLayout`的
+  `setGeometry()`此前在新旧几何相同时直接返回，若期间布局已被标记为脏（如action显隐变化），
+  重排会被错误跳过；现在几何相同但布局脏时仍会执行重排。
 - 新增`SARibbonBar::setLargeButtonMinimumWidthRatio`：设置大按钮最小宽度比例（相对于按钮高度，默认0.75）。
   此前短文字（如两个汉字）的`addLargeAction`大按钮会被硬编码的最小宽度（高度×0.75）撑宽，无法收紧；
   现在调小此比例可让短文字按钮更紧凑，设为0（或负值）则仅以icon宽度（加边距）作为下限。接口在

@@ -1686,7 +1686,14 @@ void SARibbonPanel::actionEvent(QActionEvent* e)
     } break;
 
     case QEvent::ActionChanged: {
-        // 让布局重新绘制
+        // action的属性（文本、图标、显隐等）变化会改变item的空判与占位，
+        // 仅updateGeometry()只会通知父布局尺寸提示变化，面板自身布局不会重排，
+        // 会导致运行时切换action显隐后按钮残留旧几何；
+        // 这里显式失效并激活面板布局（invalidate会一并清除按钮sizeHint缓存）
+        if (SARibbonPanelLayout* lay = panelLayout()) {
+            lay->invalidate();
+            lay->activate();
+        }
         // 通知父布局这个控件的尺寸提示(sizeHint())可能已改变
         updateGeometry();
         // 只处理 QWidgetAction 的情况
