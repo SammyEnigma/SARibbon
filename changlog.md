@@ -1,22 +1,13 @@
 # 版本更新记录(change log):
 
-## 2026-09-10 -> 2.9.4
+## 2026-09-11 -> 2.9.4
 
-- 修复：隐藏`QAction`后其面板按钮残留显示的问题。布局的显隐判断此前使用`isVisible()`，
-  该状态受祖先控件可见性影响——在主窗口显示之前执行布局时`hide()`会被跳过，控件未打上
-  显式隐藏标记，窗口显示后携带旧几何残留在界面上（典型现象：启动时隐藏某功能的action，
-  对应按钮仍压在其他按钮之上）。`SARibbonPanelLayout`与`SARibbonCategoryLayout`的`doLayout()`
-  统一改用`isHidden()`判断后再show/hide，启动阶段即可正确落显式标记；
-- 修复：运行时切换action显隐后面板不重排的问题。`SARibbonPanel`收到`ActionChanged`事件
-  此前仅通知父布局尺寸变化，面板自身布局不会失效；现在同时失效并激活面板布局；
-- 修复：布局几何未变化时跳过重排的问题。`SARibbonPanelLayout`/`SARibbonCategoryLayout`的
-  `setGeometry()`此前在新旧几何相同时直接返回，若期间布局已被标记为脏（如action显隐变化），
-  重排会被错误跳过；现在几何相同但布局脏时仍会执行重排。
-- 新增`SARibbonBar::setLargeButtonMinimumWidthRatio`：设置大按钮最小宽度比例（相对于按钮高度，默认0.75）。
-  此前短文字（如两个汉字）的`addLargeAction`大按钮会被硬编码的最小宽度（高度×0.75）撑宽，无法收紧；
-  现在调小此比例可让短文字按钮更紧凑，设为0（或负值）则仅以icon宽度（加边距）作为下限。接口在
-  Bar/Category/Panel/PanelLayout/ToolButton各层级均可用，且随新建category/panel/button自动传播
-- `SARibbonToolButton::LayoutFactor`新增`largeButtonMinimumWidthRatio`字段
+- 修复：隐藏`QAction`后其面板按钮残留显示的问题。布局的显隐判断此前使用`isVisible()`，该状态受祖先控件可见性影响——在主窗口显示之前执行布局时`hide()`会被跳过，控件未打上显式隐藏标记，窗口显示后携带旧几何残留在界面上（典型现象：启动时隐藏某功能的action，对应按钮仍压在其他按钮之上）。`SARibbonPanelLayout`与`SARibbonCategoryLayout`的`doLayout()`统一改用`isHidden()`判断后再show/hide，启动阶段即可正确落显式标记，同时覆盖panel、分隔线及滚动按钮
+- 修复：运行时切换action显隐后面板不重排的问题。`SARibbonPanel`收到`ActionChanged`事件此前仅通知父布局尺寸变化，面板自身布局不会失效；现在同时失效并激活面板布局（`invalidate()`会一并清除按钮sizeHint缓存）
+- 修复：布局几何未变化时跳过重排的问题。`SARibbonPanelLayout`/`SARibbonCategoryLayout`的`setGeometry()`此前在新旧几何相同时直接返回，若期间布局已被标记为脏（如action显隐变化），重排会被错误跳过；现在几何相同但布局脏时仍会执行重排
+- 新增`SARibbonBar::setLargeButtonMinimumWidthRatio`：设置大按钮最小宽度比例（相对于按钮高度，默认0.75）。此前短文字（如两个汉字）的`addLargeAction`大按钮会被硬编码的最小宽度（高度×0.75）撑宽，无法收紧；现在调小此比例可让短文字按钮更紧凑，设为0（或负值）则仅以icon宽度（加边距）作为下限。接口在Bar/Category/Panel/PanelLayout/ToolButton各层级均可用，且随新建category/panel/button自动传播
+- `SARibbonToolButton::LayoutFactor`新增`largeButtonMinimumWidthRatio`字段，`calcLargeButtonSizeHint`改用该字段计算大按钮最小宽度（默认值与旧版一致）
+- 修复：全仓库固化换行符策略，根治`core.autocrlf`引起的子模块假性修改。新增完整`.gitattributes`：文本文件入库统一归一化为LF，C++/Qt源码检出固定CRLF，`.sh`固定LF，`.bat`/`.cmd`固定CRLF，`.ts`沿用`eol=lf`策略，amalgamate合并文件（`src/SARibbon.cpp`、`src/SARibbon.h`）字节冻结，二进制资源显式标记；并对全仓库执行`git add --renormalize`（270个文件的换行符归一化，内容零变化）。此后任何`core.autocrlf`配置下、任何工具以任意换行重写文件，`git status`均不再产生换行符假性修改，以submodule引用本仓库的主仓库不再误报`modified content`
 - MainWindowExample：dock参数设置区新增"Large Button Min Width Ratio"数值框，可实时调整验证
 - 文档：`SARibbon-size-settings.md`（中英文）与`module-breakdown.md`补充新接口说明
 

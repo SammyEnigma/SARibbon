@@ -14298,12 +14298,15 @@ void SARibbonPanelLayout::doLayout()
 	}
 
 	// 不在上面那里进行show和hide因为这会触发SARibbonPanelLayout的重绘，导致循环绘制，非常影响效率
+	// 注意：必须用isHidden()判断而不能用isVisible()。isVisible()受祖先控件可见性影响，
+	// 当布局发生在窗口显示之前时isVisible()恒为false，会跳过hide()导致控件未打上显式隐藏标记，
+	// 窗口显示后该控件将携带旧几何残留显示
 	for (QWidget* w : sa_as_const(showWidgets)) {
-		if (!w->isVisible())
+		if (w->isHidden())
 			w->show();
 	}
 	for (QWidget* w : sa_as_const(hideWidgets)) {
-		if (w->isVisible())
+		if (!w->isHidden())
 			w->hide();
 	}
 
@@ -15395,7 +15398,9 @@ int SARibbonPanelLayout::largeButtonHeight() const
 void SARibbonPanelLayout::setGeometry(const QRect& rect)
 {
 	QRect old = geometry();
-	if (old == rect) {
+	// 几何未变且布局不脏时才可跳过；布局脏（如action显隐变化触发invalidate）时即使几何
+	// 相同也必须重新执行doLayout，否则显隐/位置变化不会被应用
+	if ((old == rect) && !isDirty()) {
 		return;
 	}
 	if (rect.width() <= 0 || rect.height() <= 0) {
@@ -17095,7 +17100,14 @@ void SARibbonPanel::actionEvent(QActionEvent* e)
 	} break;
 
 	case QEvent::ActionChanged: {
-		// 让布局重新绘制
+		// action的属性（文本、图标、显隐等）变化会改变item的空判与占位，
+		// 仅updateGeometry()只会通知父布局尺寸提示变化，面板自身布局不会重排，
+		// 会导致运行时切换action显隐后按钮残留旧几何；
+		// 这里显式失效并激活面板布局（invalidate会一并清除按钮sizeHint缓存）
+		if (SARibbonPanelLayout* lay = panelLayout()) {
+			lay->invalidate();
+			lay->activate();
+		}
 		// 通知父布局这个控件的尺寸提示(sizeHint())可能已改变
 		updateGeometry();
 		// 只处理 QWidgetAction 的情况
@@ -19611,10 +19623,10 @@ void SARibbonCategoryLayout::doLayout()
 		updateGeometryArr();
 	}
 	if (d_ptr->mItemList.isEmpty()) {
-		if (d_ptr->mLeftScrollBtn->isVisible()) {
+		if (!d_ptr->mLeftScrollBtn->isHidden()) {
 			d_ptr->mLeftScrollBtn->hide();
 		}
-		if (d_ptr->mRightScrollBtn->isVisible()) {
+		if (!d_ptr->mRightScrollBtn->isHidden()) {
 			d_ptr->mRightScrollBtn->hide();
 		}
 		return;
@@ -19686,13 +19698,16 @@ void SARibbonCategoryLayout::doLayout()
 		d_ptr->mLeftScrollBtn->raise();
 	}
 	// 不在上面那里进行show和hide因为这会触发SARibbonPanelLayout的重绘，导致循环绘制，非常影响效率
+	// 注意：必须用isHidden()判断而不能用isVisible()。isVisible()受祖先控件可见性影响，
+	// 当布局发生在窗口显示之前时isVisible()恒为false，会跳过hide()导致控件未打上显式隐藏标记，
+	// 窗口显示后该控件将携带旧几何残留显示
 	for (QWidget* w : sa_as_const(showWidgets)) {
-		if (!w->isVisible()) {
+		if (w->isHidden()) {
 			w->show();
 		}
 	}
 	for (QWidget* w : sa_as_const(hideWidgets)) {
-		if (w->isVisible()) {
+		if (!w->isHidden()) {
 			w->hide();
 		}
 	}
@@ -20332,7 +20347,9 @@ void SARibbonCategoryLayout::onRightScrollButtonClicked()
 void SARibbonCategoryLayout::setGeometry(const QRect& rect)
 {
 	QRect old = geometry();
-	if (old == rect) {
+	// 几何未变且布局不脏时才可跳过；布局脏（如panel显隐变化触发invalidate）时即使几何
+	// 相同也必须重新执行doLayout，否则显隐/位置变化不会被应用
+	if ((old == rect) && !d_ptr->mDirty) {
 		return;
 	}
 #if SARibbonCategoryLayout_DEBUG_PRINT

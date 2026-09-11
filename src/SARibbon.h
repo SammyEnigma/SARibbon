@@ -162,14 +162,14 @@
  * @def ribbon的数字版本 MAJ.MIN.{PAT}
  */
 #ifndef SA_RIBBON_BAR_VERSION_PAT
-#define SA_RIBBON_BAR_VERSION_PAT 3
+#define SA_RIBBON_BAR_VERSION_PAT 4
 #endif
 
 /**
  * @def 版本号（字符串）
  */
 #ifndef SARIBBON_VERSION
-#define SARIBBON_VERSION "2.9.3"
+#define SARIBBON_VERSION "2.9.4"
 #endif
 
 #endif // SARIBBONVERSIONINFO_H
@@ -1809,15 +1809,15 @@ public:
 	// Checks if automatic text wrapping is enabled / 检查是否启用了自动文字换行
 	bool isEnableWordWrap() const;
 
-		// Sets the button's maximum aspect ratio (width/height) / 设置按钮的最大宽高比
-		void setButtonMaximumAspectRatio(qreal v = 1.4);
-		// Gets the button's maximum aspect ratio (width/height) / 获取按钮的最大宽高比
-		qreal buttonMaximumAspectRatio() const;
+	// Sets the button's maximum aspect ratio (width/height) / 设置按钮的最大宽高比
+	void setButtonMaximumAspectRatio(qreal v = 1.4);
+	// Gets the button's maximum aspect ratio (width/height) / 获取按钮的最大宽高比
+	qreal buttonMaximumAspectRatio() const;
 
-		// Sets the minimum width ratio (relative to height) for large buttons / 设置大按钮的最小宽度比例（相对于高度）
-		void setLargeButtonMinimumWidthRatio(qreal v = 0.75);
-		// Gets the minimum width ratio (relative to height) for large buttons / 获取大按钮的最小宽度比例
-		qreal largeButtonMinimumWidthRatio() const;
+	// Sets the minimum width ratio (relative to height) for large buttons / 设置大按钮的最小宽度比例（相对于高度）
+	void setLargeButtonMinimumWidthRatio(qreal v = 0.75);
+	// Gets the minimum width ratio (relative to height) for large buttons / 获取大按钮的最小宽度比例
+	qreal largeButtonMinimumWidthRatio() const;
 
 	// Invalidates the cached size hint / 使缓存的size hint失效
 	void invalidateSizeHint();
