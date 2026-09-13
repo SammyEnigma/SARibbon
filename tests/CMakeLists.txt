@@ -19,6 +19,16 @@ function(add_saribbon_test TEST_NAME TEST_SOURCE)
     target_compile_definitions(${TEST_NAME} PRIVATE
         QT_TESTCASE_SOURCEDIR="${CMAKE_CURRENT_SOURCE_DIR}"
     )
+    # The shared library is generated in bin/<config> while tests live in tests/<config>.
+    # Windows does not search the build tree for DLLs, so without this copy the test
+    # executable cannot start (STATUS_DLL_NOT_FOUND) outside of an IDE.
+    if(NOT SARIBBON_BUILD_STATIC_LIBS)
+        add_custom_command(
+            TARGET ${TEST_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SARibbonBar> $<TARGET_FILE_DIR:${TEST_NAME}>
+            COMMENT "Copy SARibbonBar runtime library next to ${TEST_NAME}"
+        )
+    endif()
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
     set_target_properties(${TEST_NAME} PROPERTIES
         AUTOMOC ON
@@ -26,6 +36,11 @@ function(add_saribbon_test TEST_NAME TEST_SOURCE)
         AUTOUIC ON
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests
     )
+    # Every test constructs a QApplication. If the Qt platform plugin cannot be
+    # initialized Qt shows a modal error box, which blocks the process forever on a
+    # headless CI runner. Keep the timeout short so such a hang fails fast instead of
+    # consuming the whole job budget and hiding the real error.
+    set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 120)
 endfunction()
 
 # Add all tests
